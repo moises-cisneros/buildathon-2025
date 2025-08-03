@@ -12,6 +12,9 @@ import "hardhat-deploy-ethers";
 import { task } from "hardhat/config";
 import generateTsAbis from "./scripts/generateTsAbis";
 
+// Temporarily disable SSL verification for development (not recommended for production)
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 // If not set, it uses ours Alchemy's default API key.
 // You can get your own at https://dashboard.alchemyapi.io
 const providerApiKey = process.env.ALCHEMY_API_KEY || "oKxs-03sij-U_N0iOlrSsZFr29-IqbuF";
@@ -60,6 +63,8 @@ const config: HardhatUserConfig = {
     sepolia: {
       url: `https://eth-sepolia.g.alchemy.com/v2/${providerApiKey}`,
       accounts: [deployerPrivateKey],
+      gasPrice: 2000000000, // 2 gwei - muy económico
+      gas: 8000000,
     },
     arbitrum: {
       url: `https://arb-mainnet.g.alchemy.com/v2/${providerApiKey}`,
@@ -125,15 +130,55 @@ const config: HardhatUserConfig = {
       url: "https://alfajores-forno.celo-testnet.org",
       accounts: [deployerPrivateKey],
     },
+    // Avalanche Networks
+    avalancheFuji: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      chainId: 43113,
+      accounts: [deployerPrivateKey],
+      gasPrice: 25000000000, // 25 gwei
+    },
+    avalanche: {
+      url: "https://api.avax.network/ext/bc/C/rpc",
+      chainId: 43114,
+      accounts: [deployerPrivateKey],
+      gasPrice: 25000000000, // 25 gwei
+    },
   },
   // Configuration for harhdat-verify plugin
   etherscan: {
-    apiKey: etherscanApiKey,
+    apiKey: {
+      mainnet: etherscanApiKey,
+      sepolia: etherscanApiKey,
+      polygon: process.env.POLYGONSCAN_API_KEY || etherscanApiKey,
+      polygonAmoy: process.env.POLYGONSCAN_API_KEY || etherscanApiKey,
+      arbitrumOne: process.env.ARBISCAN_API_KEY || etherscanApiKey,
+      arbitrumSepolia: process.env.ARBISCAN_API_KEY || etherscanApiKey,
+      avalanche: process.env.SNOWTRACE_API_KEY || etherscanApiKey,
+      avalancheFuji: process.env.SNOWTRACE_API_KEY || etherscanApiKey,
+    },
+    customChains: [
+      {
+        network: "avalancheFuji",
+        chainId: 43113,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan",
+          browserURL: "https://testnet.snowtrace.io",
+        },
+      },
+      {
+        network: "avalanche",
+        chainId: 43114,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
+          browserURL: "https://snowtrace.io",
+        },
+      },
+    ],
   },
   // Configuration for etherscan-verify from hardhat-deploy plugin
   verify: {
     etherscan: {
-      apiKey: etherscanApiKey,
+      apiKey: process.env.SNOWTRACE_API_KEY || etherscanApiKey,
     },
   },
   sourcify: {
